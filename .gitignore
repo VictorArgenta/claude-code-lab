@@ -49,3 +49,9 @@ $RECYCLE.BIN/
 
 # ---- macOS (por si se colabora) ----
 .DS_Store
+
+# ---- Claude Code ----
+# Ajustes personales/locales (no compartir). El resto de .claude/
+# (settings.json, commands/, skills/) si puede commitearse.
+.claude/settings.local.json
+.claude/*.local.json
