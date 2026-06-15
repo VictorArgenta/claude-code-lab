@@ -35,3 +35,30 @@ Cada sesion deja nota en `/docs/sesion-NN.md` con la estructura: **Objetivo**, *
 - acceptEdits: modo de trabajo habitual en desarrollo y edicion de ficheros
 - auto: tareas validadas, commits, push, operaciones conocidas y reversibles
 - bypassPermissions: nunca en esta maquina
+
+## Contexto del repositorio
+
+- Este repo es el sandbox de un curso de 20 sesiones sobre Claude Code
+- Enfoque: EPM y consultoria (OneStream, Oracle EPM, Anaplan)
+- Todo lo que se crea aqui se sube a GitHub (VictorArgenta/claude-code-lab)
+- Lenguaje del repo: espanol para documentacion, ingles para codigo y commits
+
+## Estructura del repo
+
+- /docs → documentacion del curso y notas de sesion
+- /scripts → scripts PowerShell y Python reutilizables
+- /skills → skills personales de Claude Code (.md)
+- /mcp → configuracion y prototipos de MCP servers
+- /exercises → ejercicios por sesion
+
+## Convenciones
+
+- Scripts PowerShell: nombres en PascalCase con verbo-sustantivo (New-EPMProject.ps1)
+- Scripts Python: nombres en snake_case
+- Carpetas de ejercicio: sesion-NN/
+- No crear ficheros en la raiz del repo salvo README.md, CLAUDE.md y ficheros de config
+
+## Conexion EPM
+
+- Los scripts y artefactos del repo deben poder reutilizarse en proyectos reales
+- La herramienta EPM de referencia es OneStream; menciona compatibilidad con Oracle EPM y Anaplan cuando sea relevante
