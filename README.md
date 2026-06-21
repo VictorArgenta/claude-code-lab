@@ -48,6 +48,43 @@ Get-Help .\scripts\New-EPMProject.ps1 -Full
 
 Compatible con Windows PowerShell 5.1; no requiere módulos externos.
 
+### `scripts/New-KickoffPPT.ps1`
+
+Genera un PowerPoint de kickoff EPM de 7 diapositivas (portada, agenda, objetivos, alcance, equipo, hitos/timeline y próximos pasos). El `.ps1` es un envoltorio de orquestación: valida parámetros, comprueba que existan `python` y `python-pptx`, e invoca al script `scripts/build_kickoff_ppt.py`, que construye la presentación con `python-pptx`. El contenido es una plantilla profesional con placeholders editables (no inventa datos del cliente) y el timeline reutiliza las 7 fases EPM de `New-EPMProject.ps1`.
+
+**Parámetros**
+
+| Parámetro      | Obligatorio | Por defecto      | Descripción                                                                 |
+|----------------|-------------|------------------|-----------------------------------------------------------------------------|
+| `-ClientName`  | Sí          | —                | Nombre del cliente; aparece en la portada y da nombre al fichero.           |
+| `-EPMTool`     | No          | `OneStream`      | Herramienta EPM: `OneStream`, `OracleEPM` o `Anaplan`.                      |
+| `-ProjectDate` | No          | fecha de hoy     | Fecha del proyecto en formato `yyyy-MM-dd`.                                  |
+| `-TeamLead`    | No          | —                | Nombre del Team Lead; se destaca en portada y diapositiva de equipo.        |
+| `-OutputPath`  | No          | directorio actual| Carpeta donde se escribe el `.pptx`.                                         |
+
+El fichero generado se nombra `Kickoff-<ClientName>-<fecha>.pptx`.
+
+**Requisitos**
+
+Requiere Python 3 con el paquete `python-pptx`:
+
+```powershell
+python -m pip install --user python-pptx
+```
+
+**Ejemplos**
+
+```powershell
+# Kickoff básico (OneStream, fecha de hoy) en el directorio actual
+.\scripts\New-KickoffPPT.ps1 -ClientName "ACME"
+
+# Oracle EPM con Team Lead y carpeta de salida concreta
+.\scripts\New-KickoffPPT.ps1 -ClientName "ACME" -EPMTool OracleEPM -TeamLead "Victor Argenta" -OutputPath "C:\kickoffs"
+
+# Ayuda completa del script
+Get-Help .\scripts\New-KickoffPPT.ps1 -Full
+```
+
 ## Uso
 
 Clona el repositorio y abre Claude Code en la raíz del proyecto. Cada carpeta es independiente; usa la que corresponda según la sesión del curso en la que estés trabajando.
