@@ -90,14 +90,18 @@ $fileName = "Kickoff-$safeClient-$ProjectDate.pptx"
 $outputFile = Join-Path -Path (Resolve-Path -LiteralPath $OutputPath).Path -ChildPath $fileName
 
 # Invocar el generador Python pasando los datos por argumentos.
+# --team-lead solo se anade si tiene valor: un string vacio se descarta al
+# invocar el comando nativo y argparse veria la opcion sin argumento.
 $pyArgs = @(
     $pyScript,
     '--client', $ClientName,
     '--tool', $EPMTool,
     '--date', $ProjectDate,
-    '--team-lead', $TeamLead,
     '--output', $outputFile
 )
+if ($TeamLead) {
+    $pyArgs += @('--team-lead', $TeamLead)
+}
 $stdout = & python @pyArgs
 if ($LASTEXITCODE -ne 0) {
     Write-Error "La generacion del PowerPoint fallo. Detalle: $stdout"
