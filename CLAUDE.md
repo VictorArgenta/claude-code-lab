@@ -62,3 +62,35 @@ Cada sesion deja nota en `/docs/sesion-NN.md` con la estructura: **Objetivo**, *
 
 - Los scripts y artefactos del repo deben poder reutilizarse en proyectos reales
 - La herramienta EPM de referencia es OneStream; menciona compatibilidad con Oracle EPM y Anaplan cuando sea relevante
+
+## Formato de documentacion
+
+### Paleta Deloitte (obligatoria para cualquier documento generado)
+- Fondo: #FFFFFF (siempre blanco)
+- Titulares y texto fuerte: #26282A (negro Deloitte)
+- Subtitulos y contraste: #53565A (gris oscuro)
+- Body y captions: #63666A (gris medio)
+- Bordes y separadores: #D0D0CE (gris claro)
+- Acento unico: #86BC25 (verde Deloitte)
+- Headers, estados, links: #046A38 (verde oscuro)
+- Fondo de tarjetas: #F6F6F6 (off-white)
+- Solo riesgos criticos: #DA291C (rojo alerta)
+
+### PowerPoint
+- Fuente: Arial o Helvetica
+- Fondo de slide: siempre blanco
+- Header con linea verde (#86BC25, 3pt) en parte superior
+- Titulo portada: bold, 28pt, negro Deloitte
+- Titulo contenido: bold, 20pt, negro Deloitte
+- Sin imagenes de stock ni elementos decorativos innecesarios
+
+### Word y Markdown
+- Cabeceras en negro Deloitte
+- Enfasis en verde Deloitte
+- Tablas con cabecera en negro Deloitte y filas alternando blanco/off-white
+
+### Nombrado de ficheros
+- Añadir siempre sufijo con timestamp: NOMBRE_AAAAMMDD_HHMM
+- Zona horaria: Europe/Madrid (nunca UTC)
+- En Python: datetime.now(ZoneInfo("Europe/Madrid")).strftime("%Y%m%d_%H%M")
+- En PowerShell: [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId((Get-Date), "Romance Standard Time")
