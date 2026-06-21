@@ -1,5 +1,8 @@
 """Genera un PowerPoint de kickoff EPM con 7 diapositivas usando python-pptx.
 
+Aplica el formato Deloitte definido en CLAUDE.md: fondo blanco, fuente Arial,
+linea verde de header en cada slide, titulos en negro Deloitte y cuerpo en gris.
+
 Pensado para ser invocado desde New-KickoffPPT.ps1, que valida los parametros
 y construye la llamada. Tambien puede ejecutarse de forma aislada:
 
@@ -17,12 +20,19 @@ from pptx import Presentation
 from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_SHAPE
 
 
-# Paleta sobria corporativa, reutilizable en proyectos reales.
-COLOR_PRIMARY = RGBColor(0x1F, 0x3A, 0x5F)   # azul oscuro
-COLOR_ACCENT = RGBColor(0x2E, 0x86, 0xC1)    # azul medio
-COLOR_TEXT = RGBColor(0x33, 0x33, 0x33)      # gris texto
+# Paleta Deloitte (ver CLAUDE.md). Solo se usan los tonos necesarios aqui.
+DELOITTE_BLACK = RGBColor(0x26, 0x28, 0x2A)   # titulares y texto fuerte
+DELOITTE_DARK_GRAY = RGBColor(0x53, 0x56, 0x5A)  # subtitulos y contraste
+DELOITTE_MID_GRAY = RGBColor(0x63, 0x66, 0x6A)   # body y captions
+DELOITTE_GREEN = RGBColor(0x86, 0xBC, 0x25)   # acento unico
+DELOITTE_DARK_GREEN = RGBColor(0x04, 0x6A, 0x38)  # headers, estados, links
+DELOITTE_OFFWHITE = RGBColor(0xF6, 0xF6, 0xF6)   # fondo de tarjetas
+WHITE = RGBColor(0xFF, 0xFF, 0xFF)
+
+FONT = "Arial"
 
 # Las 7 fases EPM, coherentes con New-EPMProject.ps1.
 EPM_PHASES = [
@@ -43,28 +53,51 @@ TOOL_LABELS = {
 }
 
 
-def _add_title_only_slide(prs):
-    """Devuelve una diapositiva en blanco para componer el contenido a mano."""
-    blank_layout = prs.slide_layouts[6]
-    return prs.slides.add_slide(blank_layout)
+def _add_blank_slide(prs):
+    """Devuelve una diapositiva en blanco con fondo blanco explicito."""
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    bg = slide.background
+    bg.fill.solid()
+    bg.fill.fore_color.rgb = WHITE
+    return slide
 
 
-def _add_heading(slide, text):
-    """Anade un titulo de seccion en la parte superior de la diapositiva."""
-    box = slide.shapes.add_textbox(Inches(0.6), Inches(0.4), Inches(12.1), Inches(1.0))
+def _add_green_header_line(slide, slide_width):
+    """Linea verde Deloitte (3pt) en la parte superior de la slide."""
+    line = slide.shapes.add_shape(
+        MSO_SHAPE.RECTANGLE, Inches(0.6), Inches(0.4), slide_width - Inches(1.2), Pt(3)
+    )
+    line.fill.solid()
+    line.fill.fore_color.rgb = DELOITTE_GREEN
+    line.line.fill.background()
+    line.shadow.inherit = False
+    return line
+
+
+def _style_run(run, size, color, bold=False):
+    """Aplica fuente Arial, tamano, color y bold a un run."""
+    run.font.name = FONT
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.color.rgb = color
+
+
+def _add_content_title(slide, text):
+    """Titulo de contenido: bold 20pt, negro Deloitte."""
+    box = slide.shapes.add_textbox(Inches(0.6), Inches(0.6), Inches(12.1), Inches(0.9))
     tf = box.text_frame
     tf.word_wrap = True
-    p = tf.paragraphs[0]
-    run = p.add_run()
+    run = tf.paragraphs[0].add_run()
     run.text = text
-    run.font.size = Pt(32)
-    run.font.bold = True
-    run.font.color.rgb = COLOR_PRIMARY
+    _style_run(run, 20, DELOITTE_BLACK, bold=True)
     return box
 
 
-def _add_bullets(slide, items, top=1.6, left=0.8, width=11.7, height=5.3):
-    """Anade una lista de vinetas a partir de tuplas (nivel, texto)."""
+def _add_bullets(slide, items, top=1.7, left=0.8, width=11.7, height=5.3):
+    """Anade vinetas a partir de tuplas (nivel, texto).
+
+    Nivel 0 = subtitulo de seccion (negro Deloitte, bold); nivel 1 = body gris.
+    """
     box = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
     tf = box.text_frame
     tf.word_wrap = True
@@ -74,62 +107,52 @@ def _add_bullets(slide, items, top=1.6, left=0.8, width=11.7, height=5.3):
         p.space_after = Pt(8)
         run = p.add_run()
         run.text = text
-        run.font.size = Pt(20) if level == 0 else Pt(16)
-        run.font.color.rgb = COLOR_TEXT
         if level == 0:
-            run.font.bold = True
+            _style_run(run, 18, DELOITTE_BLACK, bold=True)
+        else:
+            _style_run(run, 15, DELOITTE_MID_GRAY)
     return box
 
 
 def build_cover(prs, client, tool_label, date, team_lead):
-    """Diapositiva 1: portada."""
-    slide = _add_title_only_slide(prs)
+    """Diapositiva 1: portada. Fondo blanco, linea verde, titulo 28pt negro."""
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
 
-    # Banda de color superior como elemento visual de portada.
-    band = slide.shapes.add_shape(
-        1, Inches(0), Inches(2.3), prs.slide_width, Inches(2.6)
-    )
-    band.fill.solid()
-    band.fill.fore_color.rgb = COLOR_PRIMARY
-    band.line.fill.background()
-
-    tf = band.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.alignment = PP_ALIGN.CENTER
-    run = p.add_run()
+    # Titulo principal de portada: bold 28pt negro Deloitte.
+    title_box = slide.shapes.add_textbox(Inches(0.6), Inches(2.6), Inches(12.1), Inches(1.2))
+    ttf = title_box.text_frame
+    ttf.word_wrap = True
+    run = ttf.paragraphs[0].add_run()
     run.text = "Kickoff de Proyecto EPM"
-    run.font.size = Pt(40)
-    run.font.bold = True
-    run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+    _style_run(run, 28, DELOITTE_BLACK, bold=True)
 
-    p2 = tf.add_paragraph()
-    p2.alignment = PP_ALIGN.CENTER
-    run2 = p2.add_run()
-    run2.text = client
-    run2.font.size = Pt(28)
-    run2.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+    # Nombre de cliente como subtitulo en gris oscuro de contraste.
+    sub = ttf.add_paragraph()
+    sub_run = sub.add_run()
+    sub_run.text = client
+    _style_run(sub_run, 20, DELOITTE_DARK_GRAY, bold=True)
 
-    # Metadatos bajo la banda.
+    # Metadatos en gris medio (body/captions).
     meta_lines = [f"Herramienta EPM: {tool_label}", f"Fecha: {date}"]
     if team_lead:
         meta_lines.append(f"Team Lead: {team_lead}")
-    box = slide.shapes.add_textbox(Inches(0.6), Inches(5.2), Inches(12.1), Inches(1.5))
+    box = slide.shapes.add_textbox(Inches(0.6), Inches(4.4), Inches(12.1), Inches(1.6))
     mtf = box.text_frame
     mtf.word_wrap = True
     for i, line in enumerate(meta_lines):
         p = mtf.paragraphs[0] if i == 0 else mtf.add_paragraph()
-        p.alignment = PP_ALIGN.CENTER
+        p.space_after = Pt(4)
         run = p.add_run()
         run.text = line
-        run.font.size = Pt(18)
-        run.font.color.rgb = COLOR_ACCENT
+        _style_run(run, 14, DELOITTE_MID_GRAY)
 
 
 def build_agenda(prs):
     """Diapositiva 2: agenda (refleja las propias secciones de la sesion)."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Agenda")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Agenda")
     items = [
         (0, "1. Objetivos del proyecto"),
         (0, "2. Alcance"),
@@ -142,8 +165,9 @@ def build_agenda(prs):
 
 def build_objectives(prs):
     """Diapositiva 3: objetivos (placeholders editables)."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Objetivos")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Objetivos")
     items = [
         (0, "Objetivo de negocio"),
         (1, "[Describir el resultado de negocio esperado]"),
@@ -159,8 +183,9 @@ def build_objectives(prs):
 
 def build_scope(prs):
     """Diapositiva 4: alcance (in-scope / out-of-scope)."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Alcance")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Alcance")
     items = [
         (0, "Dentro de alcance"),
         (1, "[Procesos / modulos incluidos]"),
@@ -176,8 +201,9 @@ def build_scope(prs):
 
 def build_team(prs, team_lead):
     """Diapositiva 5: equipo y roles."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Equipo y roles")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Equipo y roles")
     lead_text = team_lead if team_lead else "[Nombre]"
     items = [
         (0, f"Team Lead: {lead_text}"),
@@ -196,8 +222,9 @@ def build_team(prs, team_lead):
 
 def build_timeline(prs):
     """Diapositiva 6: hitos / timeline a partir de las 7 fases EPM."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Hitos y timeline")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Hitos y timeline")
     items = []
     for idx, (name, purpose) in enumerate(EPM_PHASES, start=1):
         items.append((0, f"Fase {idx}: {name}"))
@@ -207,8 +234,9 @@ def build_timeline(prs):
 
 def build_next_steps(prs):
     """Diapositiva 7: proximos pasos."""
-    slide = _add_title_only_slide(prs)
-    _add_heading(slide, "Proximos pasos")
+    slide = _add_blank_slide(prs)
+    _add_green_header_line(slide, prs.slide_width)
+    _add_content_title(slide, "Proximos pasos")
     items = [
         (0, "Acciones inmediatas"),
         (1, "[Accion] - Owner: [nombre] - Fecha: [dd/mm]"),

@@ -84,9 +84,13 @@ if (-not (Test-Path -LiteralPath $OutputPath)) {
     return
 }
 
-# Nombre de fichero seguro: Kickoff-<cliente>-<fecha>.pptx (sin caracteres invalidos).
+# Timestamp de generacion en hora de Madrid (nunca UTC), formato AAAAMMDD_HHMM.
+$madridNow = [System.TimeZoneInfo]::ConvertTimeBySystemTimeZoneId((Get-Date), "Romance Standard Time")
+$timestamp = $madridNow.ToString("yyyyMMdd_HHmm")
+
+# Nombre de fichero seguro con sufijo de timestamp: Kickoff-<cliente>_AAAAMMDD_HHMM.pptx.
 $safeClient = ($ClientName -replace '[\\/:*?"<>|]', '_').Trim()
-$fileName = "Kickoff-$safeClient-$ProjectDate.pptx"
+$fileName = "Kickoff-${safeClient}_$timestamp.pptx"
 $outputFile = Join-Path -Path (Resolve-Path -LiteralPath $OutputPath).Path -ChildPath $fileName
 
 # Invocar el generador Python pasando los datos por argumentos.
